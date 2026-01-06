@@ -41,6 +41,7 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@nuxt/eslint",
     "@nuxtjs/color-mode",
+    "@nuxt/ui",
   ],
   vite: {
     clearScreen: false,
