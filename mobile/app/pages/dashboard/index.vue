@@ -1,4 +1,4 @@
-<template>hello acho</template>
+<template></template>
 
 <script lang="ts" setup>
 definePageMeta({
