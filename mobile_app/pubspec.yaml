@@ -38,6 +38,7 @@ dependencies:
   rust_lib_mobile_app:
     path: rust_builder
   flutter_rust_bridge: 2.11.1
+  gap: ^3.0.1
 
 dev_dependencies:
   flutter_test:
