@@ -1,17 +1,15 @@
+use clap::{Args, Parser, Subcommand};
+use seekstorm::index::{Index, open_index};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use seekstorm::index::{Index, open_index};
 
-struct UserDevice {
-    path_to_files: &str,
-    path_to_index: &str,
-    path_to_dir: &str,
-    index: Arc<RwLock<Index>>
+struct SearchFn {
+    path_to_index: String,
 }
 
-impl UserDevice {
-    pub async fn new(&self) -> Result<Self, Box<dyn std::error::Error>> {
+impl SearchFn {
+    pub async fn new(&self) -> SearchFn {
         use seekstorm::index::{
             AccessType, FrequentwordType, IndexMetaObject, NgramSet, SimilarityType, StemmerType,
             StopwordType, TokenizerType, create_index,
@@ -38,7 +36,7 @@ impl UserDevice {
         };
         let segment_number_bits1 = 11;
         let index_arc = create_index(
-            Path::new(self.path_to_index),
+            Path::new(self.path_to_index.as_str()),
             meta,
             &schema,
             &Vec::new(),
@@ -46,40 +44,11 @@ impl UserDevice {
             false,
             None,
         )
-        .await?;
+        .await;
 
-        Ok(Self {
-            path_to_dir: self.path_to_dir,
-            path_to_files: self.path_to_files,
-            path_to_index: self.path_to_index,
-            index: index_arc
-        })
-    }
-
-    pub async fn index_documents(&self) -> Result<(),  Box<dyn std::error::Error>> {
-        use seekstorm::index::open_index;
-        use seekstorm::index::IndexDocuments;
-
-        ///TODO
-        let documents_json = r#"
-        [{"title":"title1 test","body":"body1","url":"url1"},
-        {"title":"title2","body":"body2 test","url":"url2"},
-        {"title":"title3 test","body":"body3 test","url":"url3"}]"#;
-
-        let documents_vec = serde_json::from_str(documents_json)?;
-        let index_arc = open_index(Path::new(&self.path_to_index), false).await;
-    
-        match index_arc {
-            Ok(index_arc) => {
-                index_arc.index_documents(documents_vec).await;
-            }
-
-            Err(error) => {
-                Err(error);
-            }
+        SearchFn {
+            path_to_index: self.path_to_index.clone(),
         }
-        
-        Ok(())
     }
 
     pub async fn update_index(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -92,7 +61,7 @@ impl UserDevice {
         [2,{"title":"title3 test","body":"body3 test","url":"url3"}]]"#;
         let id_document_vec = serde_json::from_str(id_document_vec_json).unwrap();
         let index_arc = open_index(Path::new(&self.path_to_index), false).await;
-    
+
         match index_arc {
             Ok(index_arc) => {
                 index_arc.update_documents(id_document_vec).await;
@@ -100,53 +69,71 @@ impl UserDevice {
             }
 
             Err(error) => {
-                Err(error);
+                // Err::<(error);
             }
         }
 
         Ok(())
     }
 
-    pub async fn index_directory(&self) -> Result<(), Box<dyn std::error::Error>> {
-        use seekstorm::ingest::IngestPdf;
-        let file_path = Path::new(&self.path_to_dir);
-        let index_arc = open_index(Path::new(self.path_to_index), false).await;
-    
+    pub async fn ingest_pdf_dir(&self, dir_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+        use seekstorm::ingest::IndexPdfFile;
+
+        let file_path = Path::new(&dir_path);
+        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
+
         match index_arc {
-            Ok(index_arc) => {
-                let _ = index_arc.ingest_pdf(file_path).await;
+            Ok(mut index_arc) => {
+                let _ = index_arc.index_pdf_file(file_path).await;
             }
 
             Err(error) => {
-                Err(error);
+                // Err(error.into());
+                println!("error: {}", error)
             }
         }
 
         Ok(())
     }
 
-    ///For reset functionality
-    pub async fn delete_index(&self) -> ()  {
-        let index_arc = open_index(Path::new(self.path_to_index), false).await;
-        
+    pub async fn ingest_json(&self, json_file: &Path) -> Result<(), Box<dyn std::error::Error>> {
+        use seekstorm::ingest::IngestJson;
+
+        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
+
+        match index_arc {
+            Ok(mut index_arc) => {
+                index_arc.ingest_json(json_file).await;
+                println!("{}", self.path_to_index);
+            }
+
+            Err(error) => {
+                // Err(error.into());
+                println!("error: {}", error)
+            }
+        }
+
+        Ok(())
+    }
+
+    ///For reset functionality, clearing index
+    pub async fn delete_index(&self) -> () {
+        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
+
         match index_arc {
             Ok(index_arc) => {
                 let _ = index_arc.write().await.delete_index();
             }
 
             Err(error) => {
-                Err(error);
+                // Err(error.into());
             }
         }
-
-        
     }
-
+    ///Functionality to search index
     pub async fn search_index(&self, query: String) {
         use seekstorm::highlighter::{Highlight, highlighter};
-        use seekstorm::search::{
-            QueryFacet, QueryRewriting, QueryType, ResultType, Search,
-        };
+        use seekstorm::search::{QueryFacet, QueryRewriting, QueryType, ResultType, Search};
         use std::collections::HashSet;
 
         let offset = 0;
@@ -164,80 +151,117 @@ impl UserDevice {
 
         ///TODO
         let result_sort = Vec::new();
-        let index_arc = open_index(Path::new(self.path_to_index), false).await;
+        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
+        println!("{}", query);
+
         match index_arc {
             Ok(index_arc) => {
-            let result_object = index_arc
-                .search(
-                    query,
-                    query_type,
-                    offset,
-                    length,
-                    result_type,
-                    include_uncommitted,
-                    field_filter,
-                    query_facets,
-                    facet_filter,
-                    result_sort,
-                    QueryRewriting::SearchOnly,
-                )
-                .await;
-
-            // ### display results
-
-            let highlights: Vec<Highlight> = vec![Highlight {
-                field: "body".to_owned(),
-                name: String::new(),
-                fragment_number: 2,
-                fragment_size: 160,
-                highlight_markup: true,
-                ..Default::default()
-            }];
-            let highlighter =
-                Some(highlighter(&index_arc, highlights, result_object.query_terms).await);
-            let return_fields_filter = HashSet::new();
-            let distance_fields = Vec::new();
-            let index = index_arc.write().await;
-
-        ///TODO: specify return type
-            for result in result_object.results.iter() {
-                let doc = index
-                    .get_document(
-                        result.doc_id,
-                        false,
-                        &highlighter,
-                        &return_fields_filter,
-                        &distance_fields,
+                let result_object = index_arc
+                    .search(
+                        query,
+                        query_type,
+                        offset,
+                        length,
+                        result_type,
+                        include_uncommitted,
+                        field_filter,
+                        query_facets,
+                        facet_filter,
+                        result_sort,
+                        QueryRewriting::SearchOnly,
                     )
-                    .await
-                    .unwrap();
+                    .await;
+
+                // ### display results
+
+                let highlights: Vec<Highlight> = vec![Highlight {
+                    field: "body".to_owned(),
+                    name: String::new(),
+                    fragment_number: 2,
+                    fragment_size: 160,
+                    highlight_markup: true,
+                    ..Default::default()
+                }];
+                let highlighter =
+                    Some(highlighter(&index_arc, highlights, result_object.query_terms).await);
+                let return_fields_filter = HashSet::new();
+                let distance_fields = Vec::new();
+                let index = index_arc.write().await;
+
+                ///TODO: specify return type
+                for result in result_object.results.iter() {
+                    let doc = index
+                        .get_document(
+                            result.doc_id,
+                            false,
+                            &highlighter,
+                            &return_fields_filter,
+                            &distance_fields,
+                        )
+                        .await
+                        .unwrap();
+                    println!(
+                        "result {} rank {} body field {:?}",
+                        result.doc_id,
+                        result.score,
+                        doc.get("body")
+                    );
+                }
                 println!(
-                    "result {} rank {} body field {:?}",
-                    result.doc_id,
-                    result.score,
-                    doc.get("body")
+                    "result counts {} {} {}",
+                    result_object.results.len(),
+                    result_object.result_count,
+                    result_object.result_count_total
+                );
+
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&result_object.facets).unwrap()
                 );
             }
-            println!(
-                "result counts {} {} {}",
-                result_object.results.len(),
-                result_object.result_count,
-                result_object.result_count_total
-            );
 
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&result_object.facets).unwrap()
-            );
-        }
-        
             Err(error) => {
-                Err(error);
+                // Err(error.into());
             }
         }
-
     }
+}
 
-    //TODO: move index_arc around
-    //TODO: test indexing with musixmatch
+///CLI for keyword search
+#[derive(Parser, Debug)]
+#[command(version, about = "Index documents")]
+pub struct SearchCli {
+    #[command(subcommand)]
+    pub action: Action,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Action {
+    Index { path_to_file: String },
+    Search { keyword: String },
+}
+
+pub async fn search() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = SearchCli::parse();
+
+    match &cli.action {
+        Action::Index { path_to_file } => {
+            let user_search = SearchFn::new(&SearchFn {
+                path_to_index: String::from(""), //TODO: Add path_to_index
+            })
+            .await;
+            let _ = user_search.ingest_json(Path::new(&path_to_file)).await;
+            Ok(())
+        }
+
+        Action::Search { keyword } => {
+            let user_search = SearchFn::new(&SearchFn {
+                path_to_index: String::from(""), //TODO: Add path_to_index
+            })
+            .await;
+
+            let _ = user_search.search_index(keyword.to_string()).await;
+            Ok(())
+        }
+    }
 }
