@@ -9,17 +9,12 @@ struct SearchFn {
 }
 
 impl SearchFn {
-    pub async fn new(&self) -> SearchFn {
+    pub async fn new() -> SearchFn {
         use seekstorm::index::{
             AccessType, FrequentwordType, IndexMetaObject, NgramSet, SimilarityType, StemmerType,
             StopwordType, TokenizerType, create_index,
         };
 
-        ///TODO
-        let schema_json = r#"
-        [{"field":"title","field_type":"Text","stored":false,"indexed":false},
-        {"field":"body","field_type":"Text","stored":true,"indexed":true},
-        {"field":"url","field_type":"Text","stored":false,"indexed":false}]"#;
         let schema = serde_json::from_str(schema_json).unwrap();
         let meta = IndexMetaObject {
             id: 0,
@@ -51,63 +46,18 @@ impl SearchFn {
         }
     }
 
-    pub async fn update_index(&self) -> Result<(), Box<dyn std::error::Error>> {
-        use seekstorm::commit::Commit;
-        use seekstorm::index::UpdateDocuments;
-
-        ///TODO
-        let id_document_vec_json = r#"
-        [[1,{"title":"title1 test","body":"body1","url":"url1"}],
-        [2,{"title":"title3 test","body":"body3 test","url":"url3"}]]"#;
-        let id_document_vec = serde_json::from_str(id_document_vec_json).unwrap();
-        let index_arc = open_index(Path::new(&self.path_to_index), false).await;
-
-        match index_arc {
-            Ok(index_arc) => {
-                index_arc.update_documents(id_document_vec).await;
-                index_arc.commit().await;
-            }
-
-            Err(error) => {
-                // Err::<(error);
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn ingest_pdf_dir(&self, dir_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        use seekstorm::ingest::IndexPdfFile;
-
-        let file_path = Path::new(&dir_path);
-        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
-
-        match index_arc {
-            Ok(mut index_arc) => {
-                let _ = index_arc.index_pdf_file(file_path).await;
-            }
-
-            Err(error) => {
-                // Err(error.into());
-                println!("error: {}", error)
-            }
-        }
-
-        Ok(())
-    }
-
     pub async fn ingest_json(&self, json_file: &Path) -> Result<(), Box<dyn std::error::Error>> {
         use seekstorm::ingest::IngestJson;
 
         let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
 
         match index_arc {
-            Ok(mut index_arc) => {
+            Ok(index_arc) => {
                 index_arc.ingest_json(json_file).await;
                 println!("{}", self.path_to_index);
             }
 
-            Err(error) => {
+            Err(_error) => {
                 // Err(error.into());
                 println!("error: {}", error)
             }
@@ -116,20 +66,6 @@ impl SearchFn {
         Ok(())
     }
 
-    ///For reset functionality, clearing index
-    pub async fn delete_index(&self) -> () {
-        let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
-
-        match index_arc {
-            Ok(index_arc) => {
-                let _ = index_arc.write().await.delete_index();
-            }
-
-            Err(error) => {
-                // Err(error.into());
-            }
-        }
-    }
     ///Functionality to search index
     pub async fn search_index(&self, query: String) {
         use seekstorm::highlighter::{Highlight, highlighter};
@@ -149,7 +85,6 @@ impl SearchFn {
         }];
         let facet_filter = Vec::new();
 
-        ///TODO
         let result_sort = Vec::new();
         let index_arc = open_index(Path::new(self.path_to_index.as_str()), false).await;
         println!("{}", query);
@@ -188,7 +123,6 @@ impl SearchFn {
                 let distance_fields = Vec::new();
                 let index = index_arc.write().await;
 
-                ///TODO: specify return type
                 for result in result_object.results.iter() {
                     let doc = index
                         .get_document(
@@ -220,7 +154,7 @@ impl SearchFn {
                 );
             }
 
-            Err(error) => {
+            Err(_error) => {
                 // Err(error.into());
             }
         }
