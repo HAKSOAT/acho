@@ -59,8 +59,7 @@ class PdfScanner {
     }
   }
   void openFilesRs() async {
-    var result = await hello(a: "Hi");
-    print(result);
+
   }
 
   void indexPdfFiles() async {
