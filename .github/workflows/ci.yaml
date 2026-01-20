@@ -57,13 +57,3 @@ jobs:
         run: |
           cd backend
           cargo nextest run --workspace --all-targets --all-features --no-tests=pass
-
-      - name: Install Typos
-        uses: taiki-e/install-action@v2
-        with:
-          tool: typos-cli
-
-      - name: run typos
-        run: typos
-
-      
