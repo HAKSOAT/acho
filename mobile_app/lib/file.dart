@@ -7,9 +7,9 @@ import 'dart:io';
 import 'package:gap/gap.dart';
 import 'package:mobile_app/utils.dart';
 
-class FolderApp extends StatelessWidget {
-  late List<FileSystemEntity> folders = [];
-  FolderApp({super.key, required this.folders});
+class FileApp extends StatelessWidget {
+  late List<FileSystemEntity> files = [];
+  FileApp({super.key, required this.files});
 
   @override
   Widget build(BuildContext context) {
@@ -22,20 +22,22 @@ class FolderApp extends StatelessWidget {
       children: [
         const ListTile(
             leading: Text(
-          "Folders",
+          "files",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         )),
         Column(
-            children: List.generate(folders.length, (int index) {
-              String fileName = folders[index].path.split("/").last;
-              String fileType = folders[index].path.split("/").last.split(".").last;
+            children: List.generate(files.length, (int index) {
+              String fileName = files[index].path.split("/").last;
+              String fileType = files[index].path.split("/").last.split(".").last;
 
               Map<String, Icon> fileIcon = {"pdf": Icon(Icons.picture_as_pdf)};
 
           return ListTile(
                 leading: fileIcon[fileType] ?? Icon(Icons.book),
+                trailing: Icon(Icons.chevron_right),
                 //TODO: style to make borders visible
                 onTap: () {
+                  PdfScanner().openFilesRs();
                   //TODO: Handle click, popular search bar with text controller
                 },
                 title:
