@@ -8,7 +8,7 @@ import 'package:mobile_app/utils.dart';
 import 'package:flutter_tantivy/flutter_tantivy.dart';
 
 class HomeApp extends StatefulWidget {
-  late List<FileSystemEntity> files = [];
+  List<FileSystemEntity> files = [];
   HomeApp({super.key, required this.files});
 
   @override
@@ -17,15 +17,54 @@ class HomeApp extends StatefulWidget {
 
 class _HomeAppState extends State<HomeApp> {
   List<SearchResult> matchedDocuments = [];
+  List<String> searchedItems = [];
 
 
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.sizeOf(context).width;
 
-    //TODO: cap at 5
-    late List<String> searchedItems = ['A', 'B', 'C'];
-    //TODO:switch to class, so we can access more attributes outside of title
+
+    void _showDocumentDetails(SearchResult result) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Document Preview"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Matching Chunk:",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.blue),
+                ),
+                const Gap(10),
+                Text(
+                  result.doc.text, // The full text chunk
+                  style: const TextStyle(fontSize: 15, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                ///TODO: Integrate with PDF viewer to jump to specific page
+                Navigator.pop(context);
+              },
+              child: const Text("Open Full PDF"),
+            ),
+          ],
+        ),
+      );
+    }
+
 
     return SizedBox.shrink(
         child: Column(
@@ -36,7 +75,6 @@ class _HomeAppState extends State<HomeApp> {
           child: SearchBar(
             leading: const Icon(Icons.search),
             hintText: "Search...",
-
             shape: WidgetStateProperty.all(
               const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(
@@ -48,92 +86,107 @@ class _HomeAppState extends State<HomeApp> {
             elevation: WidgetStateProperty.all(0), // Flat style
 
             onChanged: (text) {
-              //TODO: Handle search logic here
-              //spawn process into a new isolate to prevent u.i jank
+
             },
             onSubmitted: (text) async {
-              print("start searching");
               final List<SearchResult> docs = await compute(findMatch, text);
               //TODO: Handle enter key press,
               //TODO: similar to above depending on latency we may just use this
-
-              if (mounted) {
+              saveSearchHistory(text);
               setState(() {
                 matchedDocuments = docs;
               });
-              print(matchedDocuments);
-            }},
+
+              List<String> _searchedItems = await getSearchHistory();
+              setState(() {
+                searchedItems = _searchedItems;
+              });
+
+            },
           ),
         ),
         const ListTile(
             leading: Text(
           "Recent Searches",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        )),
-        Row(
-            children: List.generate(searchedItems.length, (int index) {
-          return SizedBox(
-              width: 70,
-              child: TextButton(
+        )),Row(
+            children: List.generate(min(searchedItems.length, 3), (int index) {
+          return Expanded(
+              child: OutlinedButton(
                 //TODO: style to make borders visible
-                onPressed: () {
-                  //TODO: Handle click, popular search bar with text controller
+                    style: OutlinedButton.styleFrom(
+                      shape: const StadiumBorder(), // Makes it look like a pill/chip
+                      side: BorderSide(color: Colors.grey[300]!),
+                    ),
+                onPressed: () async {
+                  final List<SearchResult> docs = await compute(findMatch, searchedItems[index]);
+
+                  setState(() {
+                    matchedDocuments = docs;
+                  });
                 },
                 child:
                     Text(searchedItems[index]), // Display results from search
               ));
         })),
-        matchedDocuments.length > 1
+        matchedDocuments.length >= 1
             ? const ListTile(
                 leading: Text(
                 "Matching Documents",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ))
-            : SizedBox.shrink(
-            child: Column(
-              children: [
-                const ListTile(
-                    leading: Text(
-                      "files",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    )),
-                Column(
-                    children: List.generate(widget.files.length, (int index) {
-                      String fileName = widget.files[index].path.split("/").last;
-                      String fileType =
-                          widget.files[index].path.split("/").last.split(".").last;
+            : Expanded(
+                child: Column(
+                children: [
+                  const ListTile(
+                      leading: Text(
+                    "Files",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  )),
+                  Column(
+                      children: List.generate(widget.files.length, (int index) {
+                    String fileName = widget.files[index].path.split("/").last;
+                    String fileType = widget.files[index].path
+                        .split("/")
+                        .last
+                        .split(".")
+                        .last;
 
-                      Map<String, Icon> fileIcon = {"pdf": Icon(Icons.picture_as_pdf)};
+                    Map<String, Icon> fileIcon = {
+                      "pdf": Icon(Icons.picture_as_pdf)
+                    };
 
-                      return ListTile(
-                        leading: fileIcon[fileType] ?? Icon(Icons.book),
-                        trailing: Icon(Icons.chevron_right),
-                        //TODO: style to make borders visible
-                        onTap: () {
-                          PdfScanner().openFile(widget.files[index]);
-                          //TODO: Handle click, popular search bar with text controller
-                        },
-                        title: Text(fileName), // Display results from search
-                      );
-                    })),
-              ],
-            )),
-        Column(
-            children: List.generate(matchedDocuments.length, (int index) {
+                    return ListTile(
+                      leading: fileIcon[fileType] ?? Icon(Icons.book),
+                      trailing: Icon(Icons.chevron_right),
+                      //TODO: style to make borders visible
+                      onTap: () {
+                        PdfScanner().openFile(widget.files[index]);
+                        //TODO: Handle click, popular search bar with text controller
+                      },
+                      title: Text(fileName), // Display results from search
+                    );
+                  })),
+                ],
+              )),
+        Expanded(
+          child: ListView.builder(
+            itemCount: matchedDocuments.length,
+            itemBuilder: (context, index) {
+              final result = matchedDocuments[index];
+
           return ListTile(
             leading: const Icon(Icons.picture_as_pdf),
             onTap: () {
-              // Handle click
-              //Open to segment of document
+              _showDocumentDetails(result);
             },
             trailing: const Icon(Icons.chevron_right),
-            title: Text(matchedDocuments[index]
+            title: Text(result
                 .doc
-                .text.substring(0,50)), // Display results from search
+                .text
+                .substring(0, 50)), // Display results from search
           );
         })),
-
-      ],
-    ));
+    ]));
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_app/settings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/home.dart';
 import 'package:mobile_app/file.dart';
 import 'package:flutter_tantivy/flutter_tantivy.dart';
@@ -86,7 +87,7 @@ class MyAppState extends State<MyApp> {
       home: Scaffold(
           appBar: AppBar(title: const Text('Acho')),
           body: PageView(
-            children: [HomeApp(files:folders), FileApp(files: folders), SettingsApp()],
+            children: [HomeApp(files: folders), SettingsApp()],
             controller: pageController,
             onPageChanged: onPageChanged,
           ),
@@ -94,19 +95,11 @@ class MyAppState extends State<MyApp> {
               onTap: onItemTap,
               selectedItemColor: Colors.brown,
               items: [
-                 BottomNavigationBarItem(
+                BottomNavigationBarItem(
                   backgroundColor: Colors.red,
                   label: 'Home',
                   icon: Icon(Icons.home_filled),
                   activeIcon: HomeApp(files: []),
-                ),
-                BottomNavigationBarItem(
-                  backgroundColor: Colors.red,
-                  label: 'Files',
-                  icon: Icon(Icons.folder),
-                  activeIcon: FileApp(
-                    files: [],
-                  ),
                 ),
                 const BottomNavigationBarItem(
                   label: 'Settings',

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/src/rust/api/simple.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_tantivy/flutter_tantivy.dart';
 import 'dart:convert';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -71,41 +72,62 @@ class PdfScanner {
   void indexPdfFiles() async {
     ///index by chunks
     List<FileSystemEntity> allPdfs = await getAllPdfs();
-    int count = 1;
     for (FileSystemEntity i in allPdfs) {
       final PdfDocument document =
           PdfDocument(inputBytes: File(i.path).readAsBytesSync());
-      String text = PdfTextExtractor(document).extractText();
+      String fileName = i.path.split("/").last;
+      final PdfTextExtractor extractor = PdfTextExtractor(document);
+      for (int j = 0; j < document.pages.count; j++) {
+        String pageText = extractor.extractText(startPageIndex: j);
+        final doc = Document(id: "${fileName}-${j.toString()}", text: pageText.replaceAll(j.toString(), " "));
+        await addDocument(doc: doc);
+      }
       document.dispose();
-      final doc = Document(id: i.toString(), text: text);
-      count += 1;
-      await addDocument(doc: doc);
     }
   }
 }
 
 Future<List<SearchResult>> findMatch(String query) async {
-  print("searching");
+  await RustLib.init();
   final results = await searchDocuments(
     query: query,
     topK: BigInt.from(10),
   );
-  List<Document> documents = [];
-  print("found");
-  print(results);
-
-  //
-  // for (final result in results) {
-  //   print('Score: ${result.score}');
-  //   print('ID: ${result.doc.id}');
-  //   print('Text: ${result.doc.text}');
-
-  //   Document? doc = getDocumentById(id: result.doc.id);
-  //   if (doc != null) {
-  //     documents.add(doc);
-  //   }
-  // }
   return results;
+}
+
+Future<void> saveSearchHistory(String text) async {
+  final query = text.trim();
+  if (query.isEmpty) return;
+
+  final directory = await getApplicationDocumentsDirectory();
+  final file = File('${directory.path}/search_history.txt');
+
+  // 1. Read existing lines into a Set to ensure uniqueness
+  Set<String> history = {};
+  if (await file.exists()) {
+    final lines = await file.readAsLines();
+    history = lines.toSet();
+  }
+
+  history.remove(query);
+  history.add(query);
+
+  await file.writeAsString(history.join('\n') + '\n');
+}
+Future<List<String>> getSearchHistory() async {
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/search_history.txt');
+
+    if (await file.exists()) {
+      String contents = await file.readAsString();
+      return contents.trim().split('\n').reversed.toList();
+    }
+  } catch (e) {
+    print("Error reading history: $e");
+  }
+  return [];
 }
 
 ///delete document when a document is deleted
