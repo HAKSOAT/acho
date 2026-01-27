@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mobile_app/src/rust/frb_generated.dart';
 import 'package:mobile_app/settings.dart';
 import 'package:mobile_app/home.dart';
 import 'package:mobile_app/file.dart';
+import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:mobile_app/storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/utils.dart';
@@ -27,6 +28,12 @@ Future<void> main() async {
 
   status = await Permission.manageExternalStorage.status;
   Log.logger.i("Permission for external storage: $status");
+
+  final directory = await getApplicationDocumentsDirectory();
+  final indexPath = '${directory.path}/tantivy_index';
+  initTantivy(dirPath: indexPath);
+  Log.logger.i("Index Path $indexPath");
+
   runApp(const MyApp());
 }
 
@@ -52,6 +59,7 @@ class MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadPdfs();
+    _indexDocuments();
   }
 
   void _loadPdfs() async {
@@ -61,6 +69,11 @@ class MyAppState extends State<MyApp> {
     setState(() {
       folders = files;
     });
+  }
+
+  void _indexDocuments() async {
+    PdfScanner scanner = PdfScanner();
+    scanner.indexPdfFiles();
   }
 
   void onItemTap(int selectedItems) {
@@ -73,7 +86,7 @@ class MyAppState extends State<MyApp> {
       home: Scaffold(
           appBar: AppBar(title: const Text('Acho')),
           body: PageView(
-            children: [HomeApp(), FileApp(files: folders), SettingsApp()],
+            children: [HomeApp(files:folders), FileApp(files: folders), SettingsApp()],
             controller: pageController,
             onPageChanged: onPageChanged,
           ),
@@ -81,11 +94,11 @@ class MyAppState extends State<MyApp> {
               onTap: onItemTap,
               selectedItemColor: Colors.brown,
               items: [
-                const BottomNavigationBarItem(
+                 BottomNavigationBarItem(
                   backgroundColor: Colors.red,
                   label: 'Home',
                   icon: Icon(Icons.home_filled),
-                  activeIcon: HomeApp(),
+                  activeIcon: HomeApp(files: []),
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: Colors.red,

@@ -44,6 +44,8 @@ dependencies:
   logger: ^2.6.2
   path_provider: ^2.1.5
   freezed: ^3.2.4
+  flutter_tantivy: ^0.0.1
+  syncfusion_flutter_pdf: ^32.1.25
 
 dev_dependencies:
   flutter_test:

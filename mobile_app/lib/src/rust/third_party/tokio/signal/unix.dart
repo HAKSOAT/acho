@@ -7,13 +7,11 @@ import '../../../frb_generated.dart';
 import '../../../lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-
-            // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `OsExtraData`, `OsStorage`, `SignalInfo`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `OsExtraData`, `OsStorage`, `SignalInfo`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_receiver_is_total_eq`, `clone`, `eq`, `event_info`, `fmt`, `fmt`, `fmt`, `for_each`, `from`, `from`, `hash`
 // These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`, `default`, `default`
 
-
-            /// Creates a new listener which will receive notifications when the current
+/// Creates a new listener which will receive notifications when the current
 /// process receives the specified signal `kind`.
 ///
 /// This function will create a new stream which binds to the default reactor.
@@ -40,192 +38,163 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 ///
 /// This function panics if there is no current reactor set, or if the `rt`
 /// feature flag is not enabled.
-Future<Signal>  signal({required SignalKind kind }) => RustLib.instance.api.tokioSignalUnixSignal(kind: kind);
+Future<Signal> signal({required SignalKind kind}) =>
+    RustLib.instance.api.tokioSignalUnixSignal(kind: kind);
 
-            
-                // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Context < 'static>>>
-                abstract class Context implements RustOpaqueInterface {
-                    
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Context < 'static>>>
+abstract class Context implements RustOpaqueInterface {}
 
-                    
-                }
-                
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Poll < Option < () > >>>
+abstract class PollOption implements RustOpaqueInterface {}
 
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Signal>>
+abstract class Signal implements RustOpaqueInterface, InternalStream {
+  @override
+  Future<PollOption> pollRecv({required Context cx});
 
-                // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Poll < Option < () > >>>
-                abstract class PollOption implements RustOpaqueInterface {
-                    
+  /// Receives the next signal notification event.
+  ///
+  /// `None` is returned if no more events can be received by this stream.
+  ///
+  /// # Cancel safety
+  ///
+  /// This method is cancel safe. If you use it as the event in a
+  /// [`tokio::select!`](crate::select) statement and some other branch
+  /// completes first, then it is guaranteed that no signal is lost.
+  ///
+  /// # Examples
+  ///
+  /// Wait for `SIGHUP`
+  ///
+  /// ```rust,no_run
+  /// use tokio::signal::unix::{signal, SignalKind};
+  ///
+  /// #[tokio::main]
+  /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+  ///     // An infinite stream of hangup signals.
+  ///     let mut stream = signal(SignalKind::hangup())?;
+  ///
+  ///     // Print whenever a HUP signal is received
+  ///     loop {
+  ///         stream.recv().await;
+  ///         println!("got signal HUP");
+  ///     }
+  /// }
+  /// ```
+  Future<void> recv();
+}
 
-                    
-                }
-                
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SignalKind>>
+abstract class SignalKind implements RustOpaqueInterface {
+  /// Represents the `SIGALRM` signal.
+  ///
+  /// On Unix systems this signal is sent when a real-time timer has expired.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> alarm() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindAlarm();
 
+  /// Get the signal's numeric value.
+  ///
+  /// ```rust
+  /// # use tokio::signal::unix::SignalKind;
+  /// let kind = SignalKind::interrupt();
+  /// assert_eq!(kind.as_raw_value(), libc::SIGINT);
+  /// ```
+  Future<CInt> asRawValue();
 
-                // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Signal>>
-                abstract class Signal implements RustOpaqueInterface, InternalStream {
-                     @override
-  Future<PollOption>  pollRecv({required Context cx });
+  /// Represents the `SIGCHLD` signal.
+  ///
+  /// On Unix systems this signal is sent when the status of a child process
+  /// has changed. By default, this signal is ignored.
+  static Future<SignalKind> child() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindChild();
 
+  /// Allows for listening to any valid OS signal.
+  ///
+  /// For example, this can be used for listening for platform-specific
+  /// signals.
+  /// ```rust,no_run
+  /// # use tokio::signal::unix::SignalKind;
+  /// # let signum = -1;
+  /// // let signum = libc::OS_SPECIFIC_SIGNAL;
+  /// let kind = SignalKind::from_raw(signum);
+  /// ```
+  static Future<SignalKind> fromRaw({required CInt signum}) =>
+      RustLib.instance.api.tokioSignalUnixSignalKindFromRaw(signum: signum);
 
-/// Receives the next signal notification event.
-///
-/// `None` is returned if no more events can be received by this stream.
-///
-/// # Cancel safety
-///
-/// This method is cancel safe. If you use it as the event in a
-/// [`tokio::select!`](crate::select) statement and some other branch
-/// completes first, then it is guaranteed that no signal is lost.
-///
-/// # Examples
-///
-/// Wait for `SIGHUP`
-///
-/// ```rust,no_run
-/// use tokio::signal::unix::{signal, SignalKind};
-///
-/// #[tokio::main]
-/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     // An infinite stream of hangup signals.
-///     let mut stream = signal(SignalKind::hangup())?;
-///
-///     // Print whenever a HUP signal is received
-///     loop {
-///         stream.recv().await;
-///         println!("got signal HUP");
-///     }
-/// }
-/// ```
- Future<void?>  recv();
+  /// Represents the `SIGHUP` signal.
+  ///
+  /// On Unix systems this signal is sent when the terminal is disconnected.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> hangup() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindHangup();
 
+  /// Represents the `SIGINFO` signal.
+  ///
+  /// On Unix systems this signal is sent to request a status update from the
+  /// process. By default, this signal is ignored.
+  static Future<SignalKind> info() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindInfo();
 
+  /// Represents the `SIGINT` signal.
+  ///
+  /// On Unix systems this signal is sent to interrupt a program.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> interrupt() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindInterrupt();
 
-                    
-                }
-                
+  /// Represents the `SIGIO` signal.
+  ///
+  /// On Unix systems this signal is sent when I/O operations are possible
+  /// on some file descriptor. By default, this signal is ignored.
+  static Future<SignalKind> io() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindIo();
 
+  /// Represents the `SIGPIPE` signal.
+  ///
+  /// On Unix systems this signal is sent when the process attempts to write
+  /// to a pipe which has no reader. By default, the process is terminated by
+  /// this signal.
+  static Future<SignalKind> pipe() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindPipe();
 
-                // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SignalKind>>
-                abstract class SignalKind implements RustOpaqueInterface {
-                    /// Represents the `SIGALRM` signal.
-///
-/// On Unix systems this signal is sent when a real-time timer has expired.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  alarm()=>RustLib.instance.api.tokioSignalUnixSignalKindAlarm();
+  /// Represents the `SIGQUIT` signal.
+  ///
+  /// On Unix systems this signal is sent to issue a shutdown of the
+  /// process, after which the OS will dump the process core.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> quit() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindQuit();
 
+  /// Represents the `SIGTERM` signal.
+  ///
+  /// On Unix systems this signal is sent to issue a shutdown of the
+  /// process. By default, the process is terminated by this signal.
+  static Future<SignalKind> terminate() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindTerminate();
 
-/// Get the signal's numeric value.
-///
-/// ```rust
-/// # use tokio::signal::unix::SignalKind;
-/// let kind = SignalKind::interrupt();
-/// assert_eq!(kind.as_raw_value(), libc::SIGINT);
-/// ```
- Future<CInt>  asRawValue();
+  /// Represents the `SIGUSR1` signal.
+  ///
+  /// On Unix systems this is a user defined signal.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> userDefined1() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindUserDefined1();
 
+  /// Represents the `SIGUSR2` signal.
+  ///
+  /// On Unix systems this is a user defined signal.
+  /// By default, the process is terminated by this signal.
+  static Future<SignalKind> userDefined2() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindUserDefined2();
 
-/// Represents the `SIGCHLD` signal.
-///
-/// On Unix systems this signal is sent when the status of a child process
-/// has changed. By default, this signal is ignored.
-static Future<SignalKind>  child()=>RustLib.instance.api.tokioSignalUnixSignalKindChild();
+  /// Represents the `SIGWINCH` signal.
+  ///
+  /// On Unix systems this signal is sent when the terminal window is resized.
+  /// By default, this signal is ignored.
+  static Future<SignalKind> windowChange() =>
+      RustLib.instance.api.tokioSignalUnixSignalKindWindowChange();
+}
 
-
-/// Allows for listening to any valid OS signal.
-///
-/// For example, this can be used for listening for platform-specific
-/// signals.
-/// ```rust,no_run
-/// # use tokio::signal::unix::SignalKind;
-/// # let signum = -1;
-/// // let signum = libc::OS_SPECIFIC_SIGNAL;
-/// let kind = SignalKind::from_raw(signum);
-/// ```
-static Future<SignalKind>  fromRaw({required CInt signum })=>RustLib.instance.api.tokioSignalUnixSignalKindFromRaw(signum: signum);
-
-
-/// Represents the `SIGHUP` signal.
-///
-/// On Unix systems this signal is sent when the terminal is disconnected.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  hangup()=>RustLib.instance.api.tokioSignalUnixSignalKindHangup();
-
-
-/// Represents the `SIGINFO` signal.
-///
-/// On Unix systems this signal is sent to request a status update from the
-/// process. By default, this signal is ignored.
-static Future<SignalKind>  info()=>RustLib.instance.api.tokioSignalUnixSignalKindInfo();
-
-
-/// Represents the `SIGINT` signal.
-///
-/// On Unix systems this signal is sent to interrupt a program.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  interrupt()=>RustLib.instance.api.tokioSignalUnixSignalKindInterrupt();
-
-
-/// Represents the `SIGIO` signal.
-///
-/// On Unix systems this signal is sent when I/O operations are possible
-/// on some file descriptor. By default, this signal is ignored.
-static Future<SignalKind>  io()=>RustLib.instance.api.tokioSignalUnixSignalKindIo();
-
-
-/// Represents the `SIGPIPE` signal.
-///
-/// On Unix systems this signal is sent when the process attempts to write
-/// to a pipe which has no reader. By default, the process is terminated by
-/// this signal.
-static Future<SignalKind>  pipe()=>RustLib.instance.api.tokioSignalUnixSignalKindPipe();
-
-
-/// Represents the `SIGQUIT` signal.
-///
-/// On Unix systems this signal is sent to issue a shutdown of the
-/// process, after which the OS will dump the process core.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  quit()=>RustLib.instance.api.tokioSignalUnixSignalKindQuit();
-
-
-/// Represents the `SIGTERM` signal.
-///
-/// On Unix systems this signal is sent to issue a shutdown of the
-/// process. By default, the process is terminated by this signal.
-static Future<SignalKind>  terminate()=>RustLib.instance.api.tokioSignalUnixSignalKindTerminate();
-
-
-/// Represents the `SIGUSR1` signal.
-///
-/// On Unix systems this is a user defined signal.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  userDefined1()=>RustLib.instance.api.tokioSignalUnixSignalKindUserDefined1();
-
-
-/// Represents the `SIGUSR2` signal.
-///
-/// On Unix systems this is a user defined signal.
-/// By default, the process is terminated by this signal.
-static Future<SignalKind>  userDefined2()=>RustLib.instance.api.tokioSignalUnixSignalKindUserDefined2();
-
-
-/// Represents the `SIGWINCH` signal.
-///
-/// On Unix systems this signal is sent when the terminal window is resized.
-/// By default, this signal is ignored.
-static Future<SignalKind>  windowChange()=>RustLib.instance.api.tokioSignalUnixSignalKindWindowChange();
-
-
-
-                    
-                }
-                
-
-
-                abstract class InternalStream {
-                     Future<PollOption>  pollRecv({required Context cx });
-
-
-                }
-                
-            
+abstract class InternalStream {
+  Future<PollOption> pollRecv({required Context cx});
+}

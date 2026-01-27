@@ -35,7 +35,7 @@ class FileApp extends StatelessWidget {
             trailing: Icon(Icons.chevron_right),
             //TODO: style to make borders visible
             onTap: () {
-              PdfScanner().openFilesRs();
+              PdfScanner().openFile(files[index]);
               //TODO: Handle click, popular search bar with text controller
             },
             title: Text(fileName), // Display results from search

@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/src/rust/api/simple.dart';
+import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'dart:convert';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 // import 'package:path_provider/path_provider.dart'; (Optional if you need specific paths)
 
@@ -51,14 +54,58 @@ class PdfScanner {
     } catch (e) {}
   }
 
-  void openFiles(FileSystemEntity file) async {
-    final stream = File(file.path).openRead();
-    await for (final data in stream) {
-      print(data);
+  Future<String> openFile(FileSystemEntity file) async {
+    final buffer = StringBuffer();
+    final stream = File(file.path).openRead().transform(utf8.decoder);
+
+    try {
+      await for (final chunk in stream) {
+        buffer.write(chunk);
+      }
+    } catch (e) {
+      print("Error reading file: $e");
     }
+    return buffer.toString();
   }
 
-  void openFilesRs() async {}
-
-  void indexPdfFiles() async {}
+  void indexPdfFiles() async {
+    ///index by chunks
+    List<FileSystemEntity> allPdfs = await getAllPdfs();
+    int count = 1;
+    for (FileSystemEntity i in allPdfs) {
+      final PdfDocument document =
+          PdfDocument(inputBytes: File(i.path).readAsBytesSync());
+      String text = PdfTextExtractor(document).extractText();
+      document.dispose();
+      final doc = Document(id: i.toString(), text: text);
+      count += 1;
+      await addDocument(doc: doc);
+    }
+  }
 }
+
+Future<List<SearchResult>> findMatch(String query) async {
+  print("searching");
+  final results = await searchDocuments(
+    query: query,
+    topK: BigInt.from(10),
+  );
+  List<Document> documents = [];
+  print("found");
+  print(results);
+
+  //
+  // for (final result in results) {
+  //   print('Score: ${result.score}');
+  //   print('ID: ${result.doc.id}');
+  //   print('Text: ${result.doc.text}');
+
+  //   Document? doc = getDocumentById(id: result.doc.id);
+  //   if (doc != null) {
+  //     documents.add(doc);
+  //   }
+  // }
+  return results;
+}
+
+///delete document when a document is deleted
