@@ -1,3 +1,5 @@
-rust_input: crate::api,seekstorm
+rust_input: crate::api,crate::tantivy
 rust_root: rust/
 dart_output: lib/src/rust
+#rust_preamble:
+#  use std::path::PathBuf;

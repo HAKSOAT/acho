@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:logger/logger.dart';
 
-
 class Log {
   static Logger? _logger;
 
@@ -20,6 +19,4 @@ class Log {
     }
     return _logger!;
   }
-
-
 }

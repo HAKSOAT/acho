@@ -13,9 +13,7 @@ class FileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-     //TODO:switch to class, so we can access more attributes outside of title
-
+    //TODO:switch to class, so we can access more attributes outside of title
 
     return SizedBox.shrink(
         child: Column(
@@ -27,22 +25,21 @@ class FileApp extends StatelessWidget {
         )),
         Column(
             children: List.generate(files.length, (int index) {
-              String fileName = files[index].path.split("/").last;
-              String fileType = files[index].path.split("/").last.split(".").last;
+          String fileName = files[index].path.split("/").last;
+          String fileType = files[index].path.split("/").last.split(".").last;
 
-              Map<String, Icon> fileIcon = {"pdf": Icon(Icons.picture_as_pdf)};
+          Map<String, Icon> fileIcon = {"pdf": Icon(Icons.picture_as_pdf)};
 
           return ListTile(
-                leading: fileIcon[fileType] ?? Icon(Icons.book),
-                trailing: Icon(Icons.chevron_right),
-                //TODO: style to make borders visible
-                onTap: () {
-                  PdfScanner().openFilesRs();
-                  //TODO: Handle click, popular search bar with text controller
-                },
-                title:
-                    Text(fileName), // Display results from search
-              );
+            leading: fileIcon[fileType] ?? Icon(Icons.book),
+            trailing: Icon(Icons.chevron_right),
+            //TODO: style to make borders visible
+            onTap: () {
+              PdfScanner().openFilesRs();
+              //TODO: Handle click, popular search bar with text controller
+            },
+            title: Text(fileName), // Display results from search
+          );
         })),
       ],
     ));

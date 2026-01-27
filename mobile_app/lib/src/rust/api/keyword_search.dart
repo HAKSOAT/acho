@@ -4,38 +4,23 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
-import '../lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-class SearchFn {
-  final String pathToIndex;
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PathBuf>>
+abstract class PathBuf implements RustOpaqueInterface {}
 
-  const SearchFn({
-    required this.pathToIndex,
-  });
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SearchFn>>
+abstract class SearchFn implements RustOpaqueInterface {
+  PathBuf get pathToIndex;
 
-  ///For reset functionality, clearing index
-  Future<void> deleteIndex() =>
-      RustLib.instance.api.crateApiKeywordSearchSearchFnDeleteIndex(
-        that: this,
-      );
+  set pathToIndex(PathBuf pathToIndex);
 
-  Future<void> ingestPdfDir({required Path dirPath}) => RustLib.instance.api
-      .crateApiKeywordSearchSearchFnIngestPdfDir(that: this, dirPath: dirPath);
+  Future<void> deleteIndex();
+
+  Future<void> ingestPdfDir({required PathBuf filePath});
 
   // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
-  Future<SearchFn> newInstance() =>
-      RustLib.instance.api.crateApiKeywordSearchSearchFnNew(
-        that: this,
-      );
-
-  @override
-  int get hashCode => pathToIndex.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SearchFn &&
-          runtimeType == other.runtimeType &&
-          pathToIndex == other.pathToIndex;
+  /// Creates a new SearchFn instance and initializes the index on disk
+  static Future<SearchFn> newInstance({required PathBuf path}) =>
+      RustLib.instance.api.crateApiKeywordSearchSearchFnNew(path: path);
 }

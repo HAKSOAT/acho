@@ -52,8 +52,6 @@ abstract class ResultObject implements RustOpaqueInterface {
 
   List<Result> get results;
 
-  List<String> get suggestions;
-
   set facets(AHashMapStringFacet facets);
 
   set originalQuery(String originalQuery);
@@ -67,8 +65,6 @@ abstract class ResultObject implements RustOpaqueInterface {
   set resultCountTotal(BigInt resultCountTotal);
 
   set results(List<Result> results);
-
-  set suggestions(List<String> suggestions);
 
   static Future<ResultObject> default_() =>
       RustLib.instance.api.seekstormSearchResultObjectDefault();

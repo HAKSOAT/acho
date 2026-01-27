@@ -11,7 +11,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/utils.dart';
 
 Future<void> main() async {
-
   await RustLib.init();
   WidgetsFlutterBinding
       .ensureInitialized(); // Ensure plugin services are initialized
@@ -57,7 +56,8 @@ class MyAppState extends State<MyApp> {
 
   void _loadPdfs() async {
     PdfScanner scanner = PdfScanner();
-    List<FileSystemEntity> files = await scanner.getAllPdfs(); // This might block UI if not careful
+    List<FileSystemEntity> files =
+        await scanner.getAllPdfs(); // This might block UI if not careful
     setState(() {
       folders = files;
     });
@@ -91,7 +91,9 @@ class MyAppState extends State<MyApp> {
                   backgroundColor: Colors.red,
                   label: 'Files',
                   icon: Icon(Icons.folder),
-                  activeIcon: FileApp(files: [],),
+                  activeIcon: FileApp(
+                    files: [],
+                  ),
                 ),
                 const BottomNavigationBarItem(
                   label: 'Settings',

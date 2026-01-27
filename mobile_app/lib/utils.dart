@@ -2,12 +2,9 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/src/rust/api/simple.dart';
 
-
-
 // import 'package:path_provider/path_provider.dart'; (Optional if you need specific paths)
 
 class PdfScanner {
-
   Future<List<FileSystemEntity>> getAllPdfs() async {
     List<FileSystemEntity> pdfs = [];
 
@@ -28,16 +25,19 @@ class PdfScanner {
   }
 
   // Recursive function to walk through folders
-  Future<void> _searchForPdfs(Directory dir, List<FileSystemEntity> pdfs) async {
+  Future<void> _searchForPdfs(
+      Directory dir, List<FileSystemEntity> pdfs) async {
     try {
-
-      List<FileSystemEntity> entities = dir.listSync(recursive: false, followLinks: false);
+      List<FileSystemEntity> entities =
+          dir.listSync(recursive: false, followLinks: false);
 
       for (FileSystemEntity entity in entities) {
         // Skip hidden folders (start with .) and the Android data folder (restricted)
         if (entity.path.split('/').last.startsWith('.')) continue;
-        if (entity.path.contains('/Android/obb')) continue; // Avoid Access Denied errors
-        if (entity.path.contains('/Android/data')) continue; // Avoid Access Denied errors
+        if (entity.path.contains('/Android/obb'))
+          continue; // Avoid Access Denied errors
+        if (entity.path.contains('/Android/data'))
+          continue; // Avoid Access Denied errors
 
         if (entity is File) {
           if (entity.path.toLowerCase().endsWith(".pdf")) {
@@ -48,8 +48,7 @@ class PdfScanner {
           await _searchForPdfs(entity, pdfs);
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   void openFiles(FileSystemEntity file) async {
@@ -58,12 +57,8 @@ class PdfScanner {
       print(data);
     }
   }
-  void openFilesRs() async {
 
-  }
+  void openFilesRs() async {}
 
-  void indexPdfFiles() async {
-
-  }
-
+  void indexPdfFiles() async {}
 }
