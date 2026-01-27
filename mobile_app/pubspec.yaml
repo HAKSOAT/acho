@@ -37,7 +37,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   rust_lib_mobile_app:
     path: rust_builder
-  flutter_rust_bridge: 2.11.1
   gap: ^3.0.1
   permission_handler: ^12.0.1
   file_picker: ^10.3.8
