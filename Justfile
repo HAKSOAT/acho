@@ -1,6 +1,7 @@
 import 'scripts/watch.justfile'
 import 'scripts/clean.justfile'
 import 'scripts/android.justfile'
+import 'scripts/onnx.justfile'
 
 
 # Alias
