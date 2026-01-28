@@ -6,11 +6,19 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `get_encoding_array`, `tokenize`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `EncodingType`
-
 Future<(Tokenizer, Session)> loadArtifacts() =>
     RustLib.instance.api.crateApiAchoLoadArtifacts();
+
+Future<Array2I64> getEncodingArray(
+        {required List<Encoding> encodings,
+        required EncodingType encodingType}) =>
+    RustLib.instance.api.crateApiAchoGetEncodingArray(
+        encodings: encodings, encodingType: encodingType);
+
+Future<(Array2I64, Array2I64)> tokenize(
+        {required List<String> texts, required Tokenizer tokenizer}) =>
+    RustLib.instance.api
+        .crateApiAchoTokenize(texts: texts, tokenizer: tokenizer);
 
 Future<Array2F32> runInference(
         {required List<String> text,
@@ -19,11 +27,27 @@ Future<Array2F32> runInference(
     RustLib.instance.api.crateApiAchoRunInference(
         text: text, model: model, tokenizer: tokenizer);
 
+Future<void> similarity(
+        {required List<String> query, required List<String> texts}) =>
+    RustLib.instance.api.crateApiAchoSimilarity(query: query, texts: texts);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< Array2 < f32 >>>
 abstract class Array2F32 implements RustOpaqueInterface {}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< Array2 < i64 >>>
+abstract class Array2I64 implements RustOpaqueInterface {}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Encoding>>
+abstract class Encoding implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Session>>
 abstract class Session implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Tokenizer>>
 abstract class Tokenizer implements RustOpaqueInterface {}
+
+enum EncodingType {
+  ids,
+  attentionMask,
+  ;
+}

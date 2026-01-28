@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/src/rust/api/simple.dart';
+import 'package:mobile_app/src/rust/api/acho.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_tantivy/flutter_tantivy.dart';
 import 'dart:convert';
@@ -95,8 +96,18 @@ Future<List<SearchResult>> findMatch(String query) async {
     query: query,
     topK: BigInt.from(10),
   );
+  print(results);
   return results;
 }
+// Future<List<Map<String, String>>>
+// Future<List<String>> semanticSearch(String query) async {
+//   await RustLib.init();
+//   final results = await similarity(
+//     query: [query],
+//     texts: ["Today is a good day", "What is going on?"]
+//   );
+//   return ["Semantic Search Button pressed"];
+// }
 
 Future<void> saveSearchHistory(String text) async {
   final query = text.trim();

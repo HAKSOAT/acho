@@ -84,6 +84,9 @@ class _HomeAppState extends State<HomeApp> {
           onChanged: (text) {},
           onSubmitted: (text) async {
             final List<SearchResult> docs = await compute(findMatch, text);
+            // final List<String> ocs = await compute(semanticSearch, text);
+            // print(ocs);
+
             //TODO: Handle enter key press,
             //TODO: similar to above depending on latency we may just use this
             saveSearchHistory(text);

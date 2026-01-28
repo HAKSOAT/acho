@@ -16,3 +16,7 @@ ort = { version = "2.0.0-rc.11" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[profile.release]
+strip = false
+opt-level = 'z'
