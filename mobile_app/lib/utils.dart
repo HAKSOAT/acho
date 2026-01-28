@@ -79,7 +79,9 @@ class PdfScanner {
       final PdfTextExtractor extractor = PdfTextExtractor(document);
       for (int j = 0; j < document.pages.count; j++) {
         String pageText = extractor.extractText(startPageIndex: j);
-        final doc = Document(id: "${fileName}-${j.toString()}", text: pageText.replaceAll(j.toString(), " "));
+        final doc = Document(
+            id: "${fileName}-${j.toString()}",
+            text: pageText.replaceAll(j.toString(), " "));
         await addDocument(doc: doc);
       }
       document.dispose();
@@ -115,6 +117,7 @@ Future<void> saveSearchHistory(String text) async {
 
   await file.writeAsString(history.join('\n') + '\n');
 }
+
 Future<List<String>> getSearchHistory() async {
   try {
     final directory = await getApplicationDocumentsDirectory();
