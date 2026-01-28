@@ -45,7 +45,6 @@ android {
     }
 
     kotlinOptions {
-        // Change this from "1.8" to "17"
         jvmTarget = "17"
     }
 
@@ -61,3 +60,5 @@ android {
 flutter {
     source = "../.."
 }
+
+

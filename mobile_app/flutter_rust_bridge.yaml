@@ -1,5 +1,12 @@
 rust_input: crate::api,crate::tantivy
 rust_root: rust/
 dart_output: lib/src/rust
-#rust_preamble:
-#  use std::path::PathBuf;
+enable_lifetime: true
+rust_preamble:
+  use std::env;
+  use anyhow::Result;
+  use tokenizers::{Encoding, Tokenizer};
+
+  use ort::session::Session;
+  use ort::session::builder::GraphOptimizationLevel;
+  use ndarray::Array2;
