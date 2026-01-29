@@ -16,6 +16,11 @@ pub enum EncodingType {
     AttentionMask
 }
 
+pub struct SimilarityScore {
+    pub index: usize,
+    pub score: f32,
+}
+
 pub fn load_artifacts(model_path: String, tokenizer_path:String) -> Result<(Tokenizer, Session)> {
     let mut tokenizer = Tokenizer::from_file(&tokenizer_path)
         .expect("Failed to load tokenizer.");
@@ -86,4 +91,23 @@ pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, 
     println!("Similarity matrix:\n{:?}", similarity_matrix);
 
     Ok(())
+}
+
+pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
+
+    let mut indexed_scores: Vec<(usize, f32)> = scores
+        .into_iter()
+        .enumerate()
+        .collect();
+
+    indexed_scores.select_nth_unstable_by(k - 1, |a, b| {
+        b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    let mut top_k = indexed_scores.into_iter().take(k).collect::<Vec<_>>();
+    top_k.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    Ok(top_k.into_iter()
+        .map(|(index, score)| SimilarityScore { index, score })
+        .collect())
 }
