@@ -7,17 +7,18 @@ use ort::session::builder::GraphOptimizationLevel;
 
 type EncodingArray = ndarray::Array2<i64>;
 type InputIds = ndarray::Array2<i64>;
-type AttentionMask = ndarray::Array2<i64>;
+pub type AttentionMask = ndarray::Array2<i64>;
 pub type Embeddings = ndarray::Array2<f32>;
 
 
-enum EncodingType {
+
+pub enum EncodingType {
     Ids,
     AttentionMask
 }
 
-pub fn load_artifacts() -> Result<(Tokenizer, Session)> {
-    let mut tokenizer = Tokenizer::from_pretrained("abdulmatinomotoso/bge-finetuned", None)
+pub fn load_artifacts(model_path: String, tokenizer_path:String) -> Result<(Tokenizer, Session)> {
+    let mut tokenizer = Tokenizer::from_file(&tokenizer_path)
         .expect("Failed to load tokenizer.");
     let padding = Some(tokenizers::PaddingParams {
         strategy: tokenizers::PaddingStrategy::BatchLongest,
@@ -29,8 +30,6 @@ pub fn load_artifacts() -> Result<(Tokenizer, Session)> {
     });
     tokenizer.with_padding(padding);
 
-    let model_path = env::var("ACHO_MODEL_PATH")
-        .unwrap_or("weights/model.onnx".to_string());
     let session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level1)?
         .with_intra_threads(4)?
@@ -38,7 +37,7 @@ pub fn load_artifacts() -> Result<(Tokenizer, Session)> {
     Ok((tokenizer, session))
 }
 
-fn get_encoding_array(encodings: &Vec<Encoding>, encoding_type: EncodingType) -> Result<EncodingArray> {
+pub fn get_encoding_array(encodings: &Vec<Encoding>, encoding_type: EncodingType) -> Result<EncodingArray> {
     let extract: fn(&Encoding) -> &[u32] = match encoding_type {
         EncodingType::Ids => |e: &Encoding| e.get_ids(),
         EncodingType::AttentionMask => |e: &Encoding| e.get_attention_mask(),
@@ -55,7 +54,7 @@ fn get_encoding_array(encodings: &Vec<Encoding>, encoding_type: EncodingType) ->
     )
 }
 
-fn tokenize(texts: &[&str], tokenizer: &Tokenizer) -> Result<(InputIds, AttentionMask)> {
+pub fn tokenize(texts: &Vec<String>, tokenizer: &Tokenizer) -> Result<(InputIds, AttentionMask)> {
     let encodings = tokenizer.encode_batch(texts.to_vec(), true)
         .expect("Tokenization failed.");
 
@@ -64,7 +63,7 @@ fn tokenize(texts: &[&str], tokenizer: &Tokenizer) -> Result<(InputIds, Attentio
     Ok((input_ids, attention_mask))
 }
 
-pub fn run_inference<'a>(text: &[&str], model: &'a mut Session, tokenizer: &Tokenizer) -> Result<Embeddings>{
+pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: &Tokenizer) -> Result<Embeddings>{
     let (tokens, attn_mask) = tokenize(text, tokenizer)?;
     let token_input_value = ort::value::Tensor::from_array(tokens)?;
     let attn_mask_input_value = ort::value::Tensor::from_array(attn_mask)?;
@@ -76,4 +75,16 @@ pub fn run_inference<'a>(text: &[&str], model: &'a mut Session, tokenizer: &Toke
         .into_dimensionality::<ndarray::Ix2>()
         .expect("Failed to convert embeddings to 2D array.");
     Ok(dense_embeddings.to_owned())
+}
+
+pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String) -> Result<()> {
+    let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
+
+    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
+    let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
+
+    let similarity_matrix = query.dot(&all_embeddings);
+    println!("Similarity matrix:\n{:?}", similarity_matrix);
+
+    Ok(())
 }
