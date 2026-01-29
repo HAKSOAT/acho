@@ -100,10 +100,14 @@ Future<List<SearchResult>> findMatch(String query) async {
 }
 
 Future<List<String>> semanticSearch(String query) async {
+
+  // await RustLib.init();
   final score = await similarity(
+    modelPath: "/storage/emulated/0/Download/model.onnx",
+    tokenizerPath: "/storage/emulated/0/Download/tokenizer.json",
     query: [query],
     texts: ["Today is a good day", "What is going on?"],
-    topK: BigInt.from(3)
+    topK: 3
   );
   print(score);
   return ["Semantic Search Button pressed"];

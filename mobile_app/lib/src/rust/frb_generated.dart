@@ -92,17 +92,20 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiSimpleInitApp();
 
-  Future<(Tokenizer, Session)> crateApiAchoLoadArtifacts();
+  Future<(Tokenizer, Session)> crateApiAchoLoadArtifacts(
+      {required String modelPath, required String tokenizerPath});
 
   Future<Array2F32> crateApiAchoRunInference(
       {required List<String> text,
       required Session model,
       required Tokenizer tokenizer});
 
-  List<SimilarityScore> crateApiAchoSimilarity(
+  Future<List<SimilarityScore>> crateApiAchoSimilarity(
       {required List<String> query,
       required List<String> texts,
-      required BigInt topK});
+      required String modelPath,
+      required String tokenizerPath,
+      required int topK});
 
   Future<(Array2I64, Array2I64)> crateApiAchoTokenize(
       {required List<String> texts, required Tokenizer tokenizer});
@@ -256,10 +259,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<(Tokenizer, Session)> crateApiAchoLoadArtifacts() {
+  Future<(Tokenizer, Session)> crateApiAchoLoadArtifacts(
+      {required String modelPath, required String tokenizerPath}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(modelPath, serializer);
+        sse_encode_String(tokenizerPath, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 5, port: port_);
       },
@@ -269,14 +275,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiAchoLoadArtifactsConstMeta,
-      argValues: [],
+      argValues: [modelPath, tokenizerPath],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiAchoLoadArtifactsConstMeta => const TaskConstMeta(
         debugName: "load_artifacts",
-        argNames: [],
+        argNames: ["modelPath", "tokenizerPath"],
       );
 
   @override
@@ -312,31 +318,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  List<SimilarityScore> crateApiAchoSimilarity(
+  Future<List<SimilarityScore>> crateApiAchoSimilarity(
       {required List<String> query,
       required List<String> texts,
-      required BigInt topK}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+      required String modelPath,
+      required String tokenizerPath,
+      required int topK}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_String(query, serializer);
         sse_encode_list_String(texts, serializer);
-        sse_encode_usize(topK, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        sse_encode_String(modelPath, serializer);
+        sse_encode_String(tokenizerPath, serializer);
+        sse_encode_i_32(topK, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_similarity_score,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiAchoSimilarityConstMeta,
-      argValues: [query, texts, topK],
+      argValues: [query, texts, modelPath, tokenizerPath, topK],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiAchoSimilarityConstMeta => const TaskConstMeta(
         debugName: "similarity",
-        argNames: ["query", "texts", "topK"],
+        argNames: ["query", "texts", "modelPath", "tokenizerPath", "topK"],
       );
 
   @override

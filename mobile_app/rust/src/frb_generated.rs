@@ -214,11 +214,14 @@ fn wire__crate__api__acho__load_artifacts_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_model_path = <String>::sse_decode(&mut deserializer);
+            let api_tokenizer_path = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::api::acho::load_artifacts()?;
+                        let output_ok =
+                            crate::api::acho::load_artifacts(api_model_path, api_tokenizer_path)?;
                         Ok(output_ok)
                     })(),
                 )
@@ -301,15 +304,16 @@ fn wire__crate__api__acho__run_inference_impl(
     )
 }
 fn wire__crate__api__acho__similarity_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "similarity",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
         move || {
             let message = unsafe {
@@ -323,14 +327,24 @@ fn wire__crate__api__acho__similarity_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_query = <Vec<String>>::sse_decode(&mut deserializer);
             let api_texts = <Vec<String>>::sse_decode(&mut deserializer);
-            let api_topK = <usize>::sse_decode(&mut deserializer);
+            let api_model_path = <String>::sse_decode(&mut deserializer);
+            let api_tokenizer_path = <String>::sse_decode(&mut deserializer);
+            let api_top_k = <i32>::sse_decode(&mut deserializer);
             deserializer.end();
-            transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
-                (move || {
-                    let output_ok = crate::api::acho::similarity(&api_query, &api_texts, api_topK)?;
-                    Ok(output_ok)
-                })(),
-            )
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::acho::similarity(
+                            &api_query,
+                            &api_texts,
+                            api_model_path,
+                            api_tokenizer_path,
+                            api_top_k,
+                        )?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
         },
     )
 }
@@ -685,6 +699,7 @@ fn pde_ffi_dispatcher_primary_impl(
         4 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
         5 => wire__crate__api__acho__load_artifacts_impl(port, ptr, rust_vec_len, data_len),
         6 => wire__crate__api__acho__run_inference_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__acho__similarity_impl(port, ptr, rust_vec_len, data_len),
         8 => wire__crate__api__acho__tokenize_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
@@ -699,7 +714,6 @@ fn pde_ffi_dispatcher_sync_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         3 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__acho__similarity_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

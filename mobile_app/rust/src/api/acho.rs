@@ -20,7 +20,6 @@ pub struct SimilarityScore {
     pub score: f32,
 }
 
-#[frb(init)]
 pub fn load_artifacts(model_path: String, tokenizer_path:String) -> Result<(Tokenizer, Session)> {
     let mut tokenizer = Tokenizer::from_file(&tokenizer_path)
         .expect("Failed to load tokenizer.");
@@ -84,10 +83,13 @@ pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: 
 pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String, top_k: i32) -> Result<Vec<SimilarityScore>> {
     let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
     let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
-    let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
-
-    let similarity_matrix = query.dot(&all_embeddings);
+    let query_embeddings: Embeddings = run_inference(&query, &mut model, &tokenizer)?;
+    
+    let similarity_matrix = query_embeddings.dot(&all_embeddings.t());
     println!("Similarity matrix:\n{:?}", similarity_matrix);
+
+    let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
+    let top_k = get_top_k(_raw_score, 3)?;
 
     Ok(top_k)
 }

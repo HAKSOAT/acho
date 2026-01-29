@@ -6,6 +6,11 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+Future<(Tokenizer, Session)> loadArtifacts(
+        {required String modelPath, required String tokenizerPath}) =>
+    RustLib.instance.api.crateApiAchoLoadArtifacts(
+        modelPath: modelPath, tokenizerPath: tokenizerPath);
+
 Future<Array2I64> getEncodingArray(
         {required List<Encoding> encodings,
         required EncodingType encodingType}) =>
