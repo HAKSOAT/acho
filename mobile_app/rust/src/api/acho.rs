@@ -1,4 +1,3 @@
-use std::env;
 use anyhow::Result;
 use tokenizers::{Encoding, Tokenizer};
 
@@ -10,18 +9,20 @@ type InputIds = ndarray::Array2<i64>;
 pub type AttentionMask = ndarray::Array2<i64>;
 pub type Embeddings = ndarray::Array2<f32>;
 
-pub struct SimilarityScore {
-    pub index: usize,
-    pub score: f32,
-}
 
 pub enum EncodingType {
     Ids,
     AttentionMask
 }
 
-pub fn load_artifacts() -> Result<(Tokenizer, Session)> {
-    let mut tokenizer = Tokenizer::from_pretrained("abdulmatinomotoso/bge-finetuned", None)
+pub struct SimilarityScore {
+    pub index: usize,
+    pub score: f32,
+}
+
+#[frb(init)]
+pub fn load_artifacts(model_path: String, tokenizer_path:String) -> Result<(Tokenizer, Session)> {
+    let mut tokenizer = Tokenizer::from_file(&tokenizer_path)
         .expect("Failed to load tokenizer.");
     let padding = Some(tokenizers::PaddingParams {
         strategy: tokenizers::PaddingStrategy::BatchLongest,
@@ -33,8 +34,6 @@ pub fn load_artifacts() -> Result<(Tokenizer, Session)> {
     });
     tokenizer.with_padding(padding);
 
-    let model_path = env::var("ACHO_MODEL_PATH")
-        .unwrap_or("weights/model.onnx".to_string());
     let session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level1)?
         .with_intra_threads(4)?
@@ -64,7 +63,7 @@ pub fn tokenize(texts: &Vec<String>, tokenizer: &Tokenizer) -> Result<(InputIds,
         .expect("Tokenization failed.");
 
     let input_ids = get_encoding_array(&encodings, EncodingType::Ids)?;
-    let attention_mask = get_encoding_array(&encodings, EncodingType::AttentionMask)?;  
+    let attention_mask = get_encoding_array(&encodings, EncodingType::AttentionMask)?;
     Ok((input_ids, attention_mask))
 }
 
@@ -82,6 +81,16 @@ pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: 
     Ok(dense_embeddings.to_owned())
 }
 
+pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String) -> Result<Vec<SimilarityScore>> {
+    let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
+    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
+    let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
+
+    let similarity_matrix = query.dot(&all_embeddings);
+    println!("Similarity matrix:\n{:?}", similarity_matrix);
+
+    Ok(top_k)
+}
 
 pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
 
@@ -100,18 +109,4 @@ pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
     Ok(top_k.into_iter()
         .map(|(index, score)| SimilarityScore { index, score })
         .collect())
-}
-
-#[flutter_rust_bridge::frb(sync)]
-pub fn similarity(query: &Vec<String>, texts: &Vec<String>, topK: usize) -> Result<Vec<SimilarityScore>> {
-    let (tokenizer, mut model) = load_artifacts()?;
-
-    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
-    let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
-    let similarity_matrix = query.dot(&all_embeddings);
-
-    let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
-    let top_k = get_top_k(_raw_score, topK)?;
-
-    Ok((top_k))
 }
