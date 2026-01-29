@@ -8,6 +8,7 @@ ndarray = "0.17.2"
 tokenizers = { version = "0.22.2", default-features = false, features = ["esaxx_fast", "indicatif", "onig", "progressbar", "hf-hub", "http"] }
 ort = { version = "2.0.0-rc.11" }
 anyhow = "1.0.100"
+ndarray-stats = "0.7.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 ort = { version = "2.0.0-rc.11", default-features = false, features = ["ndarray", "copy-dylibs", "std", "tls-native"] }

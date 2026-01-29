@@ -1,4 +1,3 @@
-use std::env;
 use anyhow::Result;
 use tokenizers::{Encoding, Tokenizer};
 
