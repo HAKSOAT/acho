@@ -10,7 +10,10 @@ type InputIds = ndarray::Array2<i64>;
 pub type AttentionMask = ndarray::Array2<i64>;
 pub type Embeddings = ndarray::Array2<f32>;
 
-
+pub struct SimilarityScore {
+    pub index: usize,
+    pub score: f32,
+}
 
 pub enum EncodingType {
     Ids,
@@ -79,14 +82,36 @@ pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: 
     Ok(dense_embeddings.to_owned())
 }
 
-pub fn similarity(query: &Vec<String>, texts: &Vec<String>) -> Result<()> {
+
+pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
+
+    let mut indexed_scores: Vec<(usize, f32)> = scores
+        .into_iter()
+        .enumerate()
+        .collect();
+
+    indexed_scores.select_nth_unstable_by(k - 1, |a, b| {
+        b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    let mut top_k = indexed_scores.into_iter().take(k).collect::<Vec<_>>();
+    top_k.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    Ok(top_k.into_iter()
+        .map(|(index, score)| SimilarityScore { index, score })
+        .collect())
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn similarity(query: &Vec<String>, texts: &Vec<String>, topK: usize) -> Result<Vec<SimilarityScore>> {
     let (tokenizer, mut model) = load_artifacts()?;
 
     let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
     let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
-
     let similarity_matrix = query.dot(&all_embeddings);
-    println!("Similarity matrix:\n{:?}", similarity_matrix);
 
-    Ok(())
+    let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
+    let top_k = get_top_k(_raw_score, topK)?;
+
+    Ok((top_k))
 }

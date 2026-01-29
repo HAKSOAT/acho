@@ -27,9 +27,16 @@ Future<Array2F32> runInference(
     RustLib.instance.api.crateApiAchoRunInference(
         text: text, model: model, tokenizer: tokenizer);
 
-Future<void> similarity(
-        {required List<String> query, required List<String> texts}) =>
-    RustLib.instance.api.crateApiAchoSimilarity(query: query, texts: texts);
+Future<List<SimilarityScore>> getTopK(
+        {required List<double> scores, required BigInt k}) =>
+    RustLib.instance.api.crateApiAchoGetTopK(scores: scores, k: k);
+
+List<SimilarityScore> similarity(
+        {required List<String> query,
+        required List<String> texts,
+        required BigInt topK}) =>
+    RustLib.instance.api
+        .crateApiAchoSimilarity(query: query, texts: texts, topK: topK);
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< Array2 < f32 >>>
 abstract class Array2F32 implements RustOpaqueInterface {}
@@ -50,4 +57,25 @@ enum EncodingType {
   ids,
   attentionMask,
   ;
+}
+
+class SimilarityScore {
+  final BigInt index;
+  final double score;
+
+  const SimilarityScore({
+    required this.index,
+    required this.score,
+  });
+
+  @override
+  int get hashCode => index.hashCode ^ score.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimilarityScore &&
+          runtimeType == other.runtimeType &&
+          index == other.index &&
+          score == other.score;
 }
