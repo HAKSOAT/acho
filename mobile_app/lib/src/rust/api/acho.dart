@@ -6,9 +6,6 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-Future<(Tokenizer, Session)> loadArtifacts() =>
-    RustLib.instance.api.crateApiAchoLoadArtifacts();
-
 Future<Array2I64> getEncodingArray(
         {required List<Encoding> encodings,
         required EncodingType encodingType}) =>
@@ -27,16 +24,22 @@ Future<Array2F32> runInference(
     RustLib.instance.api.crateApiAchoRunInference(
         text: text, model: model, tokenizer: tokenizer);
 
+Future<List<SimilarityScore>> similarity(
+        {required List<String> query,
+        required List<String> texts,
+        required String modelPath,
+        required String tokenizerPath,
+        required int topK}) =>
+    RustLib.instance.api.crateApiAchoSimilarity(
+        query: query,
+        texts: texts,
+        modelPath: modelPath,
+        tokenizerPath: tokenizerPath,
+        topK: topK);
+
 Future<List<SimilarityScore>> getTopK(
         {required List<double> scores, required BigInt k}) =>
     RustLib.instance.api.crateApiAchoGetTopK(scores: scores, k: k);
-
-List<SimilarityScore> similarity(
-        {required List<String> query,
-        required List<String> texts,
-        required BigInt topK}) =>
-    RustLib.instance.api
-        .crateApiAchoSimilarity(query: query, texts: texts, topK: topK);
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< Array2 < f32 >>>
 abstract class Array2F32 implements RustOpaqueInterface {}
