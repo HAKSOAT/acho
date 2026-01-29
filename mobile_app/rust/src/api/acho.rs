@@ -81,7 +81,7 @@ pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: 
     Ok(dense_embeddings.to_owned())
 }
 
-pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String) -> Result<Vec<SimilarityScore>> {
+pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String, top_k: i32) -> Result<Vec<SimilarityScore>> {
     let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
     let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
     let query: Embeddings = run_inference(query, &mut model, &tokenizer)?;
