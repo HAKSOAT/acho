@@ -1,7 +1,6 @@
 use anyhow::Result;
 use ndarray_stats::QuantileExt;
-
-use inference::{load_artifacts, Embeddings, run_inference, get_top_k};
+use inference::semantic_search::{load_artifacts, Embeddings, run_inference, get_top_k};
 
 fn main() -> Result<()> {
     let (tokenizer, mut model) = load_artifacts("../mobile_app/assets/model.onnx".to_string(), "../mobile_app/assets/tokenizer.json".to_string())?;
@@ -18,7 +17,7 @@ fn main() -> Result<()> {
 
     let similarity_matrix = query_embeddings.dot(&all_embeddings.t());
     println!("Similarity matrix:\n{:?}", similarity_matrix);
-    
+
     let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
 
     let top_k = get_top_k(_raw_score, 3)?;
