@@ -27,18 +27,6 @@ cd acho
 just prepare
 ```
 
-### Executing program
-
-- How to run the program
-- Step-by-step bullets
-
-```
-code blocks for commands
-```
-
-## Architecture
-_TBD_
-
 ## Limitations
 
 As explained in the [architecture](#architecture) section, we ultimately chose **Flutter + Rust** for this project. That decision wasn’t arbitrary—we explored several alternatives, including Kotlin, Tauri, and other stacks, before settling on this combination.
