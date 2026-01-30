@@ -1,16 +1,17 @@
 use anyhow::Result;
-use inference::semantic_search::{load_artifacts, Embeddings, run_inference, get_top_k};
+use inference::semantic_search::{Embeddings, get_top_k, load_artifacts, run_inference};
 
 fn main() -> Result<()> {
-    let (tokenizer, mut model) = load_artifacts("../mobile_app/assets/model.onnx".to_string(), "../mobile_app/assets/tokenizer.json".to_string())?;
+    let (tokenizer, mut model) = load_artifacts(
+        "../mobile_app/assets/model.onnx".to_string(),
+        "../mobile_app/assets/tokenizer.json".to_string(),
+    )?;
     let texts = vec![
         "What is your name".to_string(),
         "Ki lo ruko e?".to_string(),
         "Ki lo je losan?".to_string(),
     ];
-    let query = vec![
-        "Ki lo ruko e?".to_string(),
-    ];
+    let query = vec!["Ki lo ruko e?".to_string()];
     let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
     let query_embeddings: Embeddings = run_inference(&query, &mut model, &tokenizer)?;
 
