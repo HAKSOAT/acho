@@ -37,7 +37,7 @@ code blocks for commands
 ```
 
 ## Architecture
-
+_TBD_
 
 ## Limitations
 
@@ -59,3 +59,5 @@ We eventually migrated to **Flutter**, integrated with Rust via **flutter_rust_b
 
 In summary, while Tauri was a good starting point, its limitations—especially around filesystem handling and API ergonomics—made it unsuitable for the long-term goals of the project. Flutter + Rust provided a better balance of performance, developer experience, and architectural clarity.
 
+## License 
+The Project is released under the [Apache License, Version 2.0](./LICENSE)
