@@ -41,7 +41,7 @@ pub fn load_artifacts(model_path: String, tokenizer_path: String) -> Result<(Tok
 }
 
 pub fn get_encoding_array(
-    encodings: &Vec<Encoding>,
+    encodings: &[Encoding],
     encoding_type: EncodingType,
 ) -> Result<EncodingArray> {
     let extract: fn(&Encoding) -> &[u32] = match encoding_type {
@@ -59,7 +59,7 @@ pub fn get_encoding_array(
         .expect("Failed to create Array2D from encodings."))
 }
 
-pub fn tokenize(texts: &Vec<String>, tokenizer: &Tokenizer) -> Result<(InputIds, AttentionMask)> {
+pub fn tokenize(texts: &[String], tokenizer: &Tokenizer) -> Result<(InputIds, AttentionMask)> {
     let encodings = tokenizer
         .encode_batch(texts.to_vec(), true)
         .expect("Tokenization failed.");
@@ -69,9 +69,9 @@ pub fn tokenize(texts: &Vec<String>, tokenizer: &Tokenizer) -> Result<(InputIds,
     Ok((input_ids, attention_mask))
 }
 
-pub fn run_inference<'a>(
-    text: &Vec<String>,
-    model: &'a mut Session,
+pub fn run_inference(
+    text: &[String],
+    model: &mut Session,
     tokenizer: &Tokenizer,
 ) -> Result<Embeddings> {
     let (tokens, attn_mask) = tokenize(text, tokenizer)?;
@@ -81,7 +81,7 @@ pub fn run_inference<'a>(
         ort::inputs!["input_ids" => token_input_value, "attention_mask" => attn_mask_input_value]
     ).expect("Embedding model inference failed.");
 
-    let dense_embeddings = (&dense["dense_embeddings"])
+    let dense_embeddings = &dense["dense_embeddings"]
         .try_extract_array::<f32>()?
         .into_dimensionality::<ndarray::Ix2>()
         .expect("Failed to convert embeddings to 2D array.");
@@ -105,15 +105,15 @@ pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
 }
 
 pub fn similarity(
-    query: &Vec<String>,
-    texts: &Vec<String>,
+    query: &[String],
+    texts: &[String],
     model_path: String,
     tokenizer_path: String,
     top_k: usize,
 ) -> Result<Vec<SimilarityScore>> {
     let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
-    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
-    let query_embeddings: Embeddings = run_inference(&query, &mut model, &tokenizer)?;
+    let all_embeddings: Embeddings = run_inference(texts, &mut model, &tokenizer)?;
+    let query_embeddings: Embeddings = run_inference(query, &mut model, &tokenizer)?;
     let similarity_matrix = query_embeddings.dot(&all_embeddings.t());
 
     println!("Similarity matrix:\n{:?}", similarity_matrix);
