@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:mobile_app/src/rust/api/acho.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'package:mobile_app/src/rust/frb_generated.dart';
+import 'package:mobile_app/src/rust/api/acho.dart';
+import 'package:mobile_app/src/rust/api/tantivy.dart';
 import 'dart:convert';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
@@ -93,7 +94,7 @@ Future<List<SearchResult>> findMatch(String query) async {
   await RustLib.init();
   final results = await searchDocuments(
     query: query,
-    topK: BigInt.from(10),
+    topK: BigInt.from(5),
   );
   // print(results);
   return results;
@@ -101,13 +102,13 @@ Future<List<SearchResult>> findMatch(String query) async {
 
 Future<List<String>> semanticSearch(String query) async {
 
-  // await RustLib.init();
+  await RustLib.init();
   final score = await similarity(
     modelPath: "/storage/emulated/0/Download/model.onnx",
     tokenizerPath: "/storage/emulated/0/Download/tokenizer.json",
     query: [query],
-    texts: ["Today is a good day", "What is going on?"],
-    topK: 3
+    texts: ["Today is a good day", "What is going on?", "Bawo ni?"],
+    topK: BigInt.from(3)
   );
   print(score);
   return ["Semantic Search Button pressed"];

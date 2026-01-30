@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gap/gap.dart';
 import 'package:mobile_app/utils.dart';
-import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'package:mobile_app/src/rust/frb_generated.dart';
+import 'package:mobile_app/src/rust/api/acho.dart';
+import 'package:mobile_app/src/rust/api/tantivy.dart';
 
 class HomeApp extends StatefulWidget {
   List<FileSystemEntity> files = [];
@@ -83,8 +85,8 @@ class _HomeAppState extends State<HomeApp> {
 
           onChanged: (text) {},
           onSubmitted: (text) async {
-            // final List<SearchResult> docs = await compute(findMatch, text);
-            final List<String> ocs = await semanticSearch(text);
+            final List<SearchResult> docs = await compute(findMatch, text);
+            // final List<String> ocs = await compute(semanticSearch, text);
 
             //TODO: Handle enter key press,
             //TODO: similar to above depending on latency we may just use this
@@ -93,9 +95,9 @@ class _HomeAppState extends State<HomeApp> {
             setState(() {
               searchedItems = _searchedItems;
             });
-            // setState(() {
-            //   matchedDocuments = docs;
-            // });
+            setState(() {
+              matchedDocuments = docs;
+            });
 
 
           },
@@ -116,8 +118,8 @@ class _HomeAppState extends State<HomeApp> {
             side: BorderSide(color: Colors.grey[300]!),
           ),
           onPressed: () async {
-            final List<SearchResult> docs =
-                await compute(findMatch, searchedItems[index]);
+            final List<SearchResult> docs = [];
+                // await compute(findMatch, searchedItems[index]);
 
             setState(() {
               matchedDocuments = docs;
