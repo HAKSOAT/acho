@@ -17,16 +17,10 @@ class SettingsApp extends StatelessWidget {
           // onTap:,
         ),
         ListTile(
-          leading: Icon(Icons.folder),
-          title: Text("Folder"),
-          trailing: Icon(Icons.chevron_right_sharp),
-          // onTap:,
-        ),
-        ListTile(
           leading: Icon(Icons.change_circle_sharp),
           title: Text("Re-index PDFs"),
           trailing: Icon(Icons.chevron_right_sharp),
-          // onTap:,
+          // onTap:
         ),
         Divider(),
         ListTile(

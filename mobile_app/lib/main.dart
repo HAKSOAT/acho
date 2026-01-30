@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_app/settings.dart';
 import 'package:mobile_app/home.dart';
+import 'package:mobile_app/file.dart';
 
 import 'package:mobile_app/src/rust/frb_generated.dart';
 import 'package:mobile_app/src/rust/api/acho.dart';
@@ -89,7 +90,11 @@ class MyAppState extends State<MyApp> {
       home: Scaffold(
           appBar: AppBar(title: const Text('Acho')),
           body: PageView(
-            children: [HomeApp(files: folders), SettingsApp()],
+            children: [
+              HomeApp(files: folders),
+              FileApp(files: folders),
+              SettingsApp()
+            ],
             controller: pageController,
             onPageChanged: onPageChanged,
           ),
@@ -102,6 +107,12 @@ class MyAppState extends State<MyApp> {
                   label: 'Home',
                   icon: Icon(Icons.home_filled),
                   activeIcon: HomeApp(files: []),
+                ),
+                BottomNavigationBarItem(
+                  backgroundColor: Colors.red,
+                  label: 'Files',
+                  icon: Icon(Icons.folder_outlined),
+                  activeIcon: FileApp(files: []),
                 ),
                 const BottomNavigationBarItem(
                   label: 'Settings',
