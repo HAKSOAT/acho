@@ -16,6 +16,7 @@ pub enum EncodingType {
     AttentionMask
 }
 
+#[derive(Debug, Clone)]
 pub struct SimilarityScore {
     pub index: usize,
     pub score: f32,
@@ -81,21 +82,6 @@ pub fn run_inference<'a>(text: &Vec<String>, model: &'a mut Session, tokenizer: 
     Ok(dense_embeddings.to_owned())
 }
 
-pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String, top_k: String) -> Result<Vec<SimilarityScore>> {
-    let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
-
-    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
-    let query_embeddings: Embeddings = run_inference(&query, &mut model, &tokenizer)?;
-    let similarity_matrix = query_embeddings.dot(&all_embeddings.t());
-    println!("Similarity matrix:\n{:?}", similarity_matrix);
-
-    let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
-
-    let top_k = get_top_k(_raw_score, 3)?;
-
-    Ok(top_k)
-}
-
 pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
 
     let mut indexed_scores: Vec<(usize, f32)> = scores
@@ -113,4 +99,19 @@ pub fn get_top_k(scores: Vec<f32>, k: usize) -> Result<Vec<SimilarityScore>> {
     Ok(top_k.into_iter()
         .map(|(index, score)| SimilarityScore { index, score })
         .collect())
+}
+
+pub fn similarity(query: &Vec<String>, texts: &Vec<String>, model_path: String, tokenizer_path:String, top_k: usize) -> Result<Vec<SimilarityScore>> {
+    
+    let (tokenizer, mut model) = load_artifacts(model_path, tokenizer_path)?;
+    let all_embeddings: Embeddings = run_inference(&texts, &mut model, &tokenizer)?;
+    let query_embeddings: Embeddings = run_inference(&query, &mut model, &tokenizer)?;
+    let similarity_matrix = query_embeddings.dot(&all_embeddings.t());
+    
+    println!("Similarity matrix:\n{:?}", similarity_matrix);
+
+    let (_raw_score, _length) = similarity_matrix.into_raw_vec_and_offset();
+    let _top_k = get_top_k(_raw_score, top_k)?;
+
+    Ok(_top_k)
 }

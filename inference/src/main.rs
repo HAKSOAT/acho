@@ -1,5 +1,4 @@
 use anyhow::Result;
-use ndarray_stats::QuantileExt;
 use inference::semantic_search::{load_artifacts, Embeddings, run_inference, get_top_k};
 
 fn main() -> Result<()> {
