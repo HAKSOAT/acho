@@ -26,11 +26,17 @@ if (flutterVersionName == null) {
 android {
     namespace = "com.example.mobile_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    dependencies {
+        // ... other dependencies
+
+        // This will auto-download and bundle libonnxruntime.so
+        implementation "com.microsoft.onnxruntime:onnxruntime-android:1.17.0"
     }
 
     defaultConfig {
@@ -53,6 +59,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
+        }
+    }
+    packaging {
+        resources {
+            pickFirst '**/libc++_shared.so'
         }
     }
 }
