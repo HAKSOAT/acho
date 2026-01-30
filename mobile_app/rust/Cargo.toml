@@ -12,11 +12,16 @@ ndarray = "0.17.2"
 tokenizers = { version = "0.22.2", default-features = false, features = ["esaxx_fast", "indicatif", "onig", "progressbar", "hf-hub", "http"] }
 anyhow = "1.0.100"
 ndarray-stats = "0.7.0"
-ort = { version = "2.0.0-rc.11" }
+ort = { version = "2.0.0-rc.11", features = ["load-dynamic"]}
+tantivy = "0.25.0"
+once_cell = "1.21.3"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 
 [profile.release]
-strip = false
-opt-level = 'z'
+lto = true
+# This helps prevent symbol clashes
+panic = "abort"
+
+
