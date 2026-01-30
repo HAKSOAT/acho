@@ -89,6 +89,7 @@ class _HomeAppState extends State<HomeApp> {
             final List<SearchResult> docs = await compute(findMatch, text);
             final List<String> sdocs = await compute(
                 semanticSearch,
+                ///TODO: Placeholder document
                 SemanticSearch(text, ['Ki lo shele', 'Whats happening', 'The way what ?']));
 
             print(sdocs);
