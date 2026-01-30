@@ -1,4 +1,4 @@
-use anyhow::{Result};
+use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
