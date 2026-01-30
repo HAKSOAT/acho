@@ -20,7 +20,7 @@ class FileApp extends StatelessWidget {
       children: [
         const ListTile(
             leading: Text(
-          "files",
+          "Files",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         )),
         Column(

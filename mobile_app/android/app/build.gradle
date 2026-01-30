@@ -26,11 +26,17 @@ if (flutterVersionName == null) {
 android {
     namespace = "com.example.mobile_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    dependencies {
+        // ... other dependencies
+
+        // This will auto-download and bundle libonnxruntime.so
+        implementation "com.microsoft.onnxruntime:onnxruntime-android:1.17.0"
     }
 
     defaultConfig {
@@ -45,7 +51,6 @@ android {
     }
 
     kotlinOptions {
-        // Change this from "1.8" to "17"
         jvmTarget = "17"
     }
 
@@ -56,8 +61,15 @@ android {
             signingConfig = signingConfigs.debug
         }
     }
+    packaging {
+        resources {
+            pickFirst '**/libc++_shared.so'
+        }
+    }
 }
 
 flutter {
     source = "../.."
 }
+
+

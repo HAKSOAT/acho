@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:core';
+import 'dart:math' as math;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:mobile_app/src/rust/api/simple.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'package:mobile_app/src/rust/frb_generated.dart';
+import 'package:mobile_app/src/rust/api/acho.dart';
+import 'package:mobile_app/src/rust/api/tantivy.dart';
 import 'dart:convert';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
@@ -93,9 +96,56 @@ Future<List<SearchResult>> findMatch(String query) async {
   await RustLib.init();
   final results = await searchDocuments(
     query: query,
-    topK: BigInt.from(10),
+    topK: BigInt.from(5),
   );
   return results;
+}
+
+Future<List<String>> getDocumentText() async {
+  List<String> texts = [];
+
+  List<FileSystemEntity> allPdfs = await PdfScanner().getAllPdfs();
+  for (FileSystemEntity i in allPdfs) {
+    final PdfDocument document =
+    PdfDocument(inputBytes: File(i.path).readAsBytesSync());
+    String fileName = i.path.split("/").last;
+    final PdfTextExtractor extractor = PdfTextExtractor(document);
+
+    for (int j = 0; j < document.pages.count; j++) {
+      String pageText = extractor.extractText(startPageIndex: j);
+      texts.add(pageText);
+    };
+}
+  return texts;
+}
+
+class SemanticSearch {
+  final String query;
+  final List<String> texts;
+
+  SemanticSearch(this.query, this.texts);
+}
+
+Future<List<String>> semanticSearch(SemanticSearch object) async {
+  List<String> result = [];
+  await RustLib.init();
+
+  final score = await similarity(
+      modelPath: "/storage/emulated/0/Download/model.onnx",
+      tokenizerPath: "/storage/emulated/0/Download/tokenizer.json",
+      query: [object.query],
+      texts: object.texts,
+      topK: BigInt.from(math.min(
+          5,
+          object.texts.length
+      ))
+  );
+  for (var i in score) {
+    result.add(
+        object.texts[i.index.toInt()]
+    );
+  }
+  return result;
 }
 
 Future<void> saveSearchHistory(String text) async {

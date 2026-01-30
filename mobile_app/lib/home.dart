@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gap/gap.dart';
 import 'package:mobile_app/utils.dart';
-import 'package:flutter_tantivy/flutter_tantivy.dart';
+import 'package:mobile_app/src/rust/frb_generated.dart';
+import 'package:mobile_app/src/rust/api/acho.dart';
+import 'package:mobile_app/src/rust/api/tantivy.dart';
 
 class HomeApp extends StatefulWidget {
   List<FileSystemEntity> files = [];
@@ -17,6 +19,7 @@ class HomeApp extends StatefulWidget {
 
 class _HomeAppState extends State<HomeApp> {
   List<SearchResult> matchedDocuments = [];
+  List<String> semanticMatchedDocument = [];
   List<String> searchedItems = [];
 
   @override
@@ -84,16 +87,26 @@ class _HomeAppState extends State<HomeApp> {
           onChanged: (text) {},
           onSubmitted: (text) async {
             final List<SearchResult> docs = await compute(findMatch, text);
-            //TODO: Handle enter key press,
-            //TODO: similar to above depending on latency we may just use this
+            final texts = await getDocumentText();
+
+            final List<String> sdocs = await compute(
+                semanticSearch,
+                ///TODO: Placeholder document
+                SemanticSearch(text, texts));
+
             saveSearchHistory(text);
-            setState(() {
-              matchedDocuments = docs;
-            });
 
             List<String> _searchedItems = await getSearchHistory();
             setState(() {
               searchedItems = _searchedItems;
+            });
+
+            setState(() {
+              matchedDocuments = docs;
+            });
+
+            setState(() {
+              semanticMatchedDocument = sdocs;
             });
           },
         ),
@@ -113,8 +126,8 @@ class _HomeAppState extends State<HomeApp> {
             side: BorderSide(color: Colors.grey[300]!),
           ),
           onPressed: () async {
-            final List<SearchResult> docs =
-                await compute(findMatch, searchedItems[index]);
+            final List<SearchResult> docs = [];
+            await compute(findMatch, searchedItems[index]);
 
             setState(() {
               matchedDocuments = docs;
@@ -123,59 +136,90 @@ class _HomeAppState extends State<HomeApp> {
           child: Text(searchedItems[index]), // Display results from search
         ));
       })),
+      const ListTile(
+          leading: Text(
+        "Keyword Match",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      )),
       matchedDocuments.length >= 1
-          ? const ListTile(
-              leading: Text(
-              "Matching Documents",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ))
-          : Expanded(
-              child: Column(
-              children: [
-                const ListTile(
-                    leading: Text(
-                  "Files",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                )),
-                Column(
-                    children: List.generate(widget.files.length, (int index) {
-                  String fileName = widget.files[index].path.split("/").last;
-                  String fileType =
-                      widget.files[index].path.split("/").last.split(".").last;
+          ? Expanded(
+              child: ListView.builder(
+                  itemCount: matchedDocuments.length,
+                  itemBuilder: (context, index) {
+                    final result = matchedDocuments[index];
 
-                  Map<String, Icon> fileIcon = {
-                    "pdf": Icon(Icons.picture_as_pdf)
-                  };
-
-                  return ListTile(
-                    leading: fileIcon[fileType] ?? Icon(Icons.book),
-                    trailing: Icon(Icons.chevron_right),
-                    //TODO: style to make borders visible
-                    onTap: () {
-                      PdfScanner().openFile(widget.files[index]);
-                      //TODO: Handle click, popular search bar with text controller
-                    },
-                    title: Text(fileName), // Display results from search
-                  );
-                })),
-              ],
-            )),
-      Expanded(
-          child: ListView.builder(
-              itemCount: matchedDocuments.length,
-              itemBuilder: (context, index) {
-                final result = matchedDocuments[index];
-
-                return ListTile(
-                  leading: const Icon(Icons.picture_as_pdf),
-                  onTap: () {
-                    _showDocumentDetails(result);
-                  },
-                  trailing: const Icon(Icons.chevron_right),
-                  title: Text(result.doc.text
-                      .substring(0, 50)), // Display results from search
-                );
-              })),
+                    return ListTile(
+                      leading: const Icon(Icons.picture_as_pdf),
+                      onTap: () {
+                        _showDocumentDetails(result);
+                      },
+                      trailing: const Icon(Icons.chevron_right),
+                      title: Text(result.doc.text
+                          .substring(0, 50)), // Display results from search
+                    );
+                  }))
+          : SizedBox.shrink(),
+      Gap(10),
+      const ListTile(
+          leading: Text(
+        "Semantic Match",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      )),
+      semanticMatchedDocument.length >= 1
+          ? Expanded(
+              child: ListView.builder(
+                  itemCount: semanticMatchedDocument.length,
+                  itemBuilder: (context, index) {
+                    final result = semanticMatchedDocument[index];
+                    return ListTile(
+                      leading: const Icon(Icons.picture_as_pdf),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Document Preview"),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Matching Chunk:",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue),
+                                  ),
+                                  const Gap(10),
+                                  Text(
+                                    result, // The full text chunk
+                                    style: const TextStyle(
+                                        fontSize: 15, height: 1.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Close"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  ///TODO: Integrate with PDF viewer to jump to specific page
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("Open Full PDF"),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      trailing: const Icon(Icons.chevron_right),
+                      title: Text(result.length > 50 ? result.substring(
+                          0, 50): result), // Display results from search
+                    );
+                  }))
+          : SizedBox.shrink(),
     ]));
   }
 }

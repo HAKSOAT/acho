@@ -1,0 +1,6 @@
+[target.aarch64-linux-android]
+linker = "aarch64-linux-android24-clang"
+rustflags = [
+    "-C", "link-arg=-Wl,-soname,librust_lib_mobile_app.so",
+    "-C", "link-arg=-lc++_shared"
+]
