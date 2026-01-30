@@ -87,12 +87,13 @@ class _HomeAppState extends State<HomeApp> {
           onChanged: (text) {},
           onSubmitted: (text) async {
             final List<SearchResult> docs = await compute(findMatch, text);
+            final texts = await getDocumentText();
+
             final List<String> sdocs = await compute(
                 semanticSearch,
                 ///TODO: Placeholder document
-                SemanticSearch(text, ['Ki lo shele', 'Whats happening', 'The way what ?']));
+                SemanticSearch(text, texts));
 
-            print(sdocs);
             saveSearchHistory(text);
 
             List<String> _searchedItems = await getSearchHistory();
