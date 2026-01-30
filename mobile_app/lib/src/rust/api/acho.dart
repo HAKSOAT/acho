@@ -34,7 +34,7 @@ Future<List<SimilarityScore>> similarity(
         required List<String> texts,
         required String modelPath,
         required String tokenizerPath,
-        required int topK}) =>
+        required BigInt topK}) =>
     RustLib.instance.api.crateApiAchoSimilarity(
         query: query,
         texts: texts,
