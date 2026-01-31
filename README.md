@@ -29,11 +29,12 @@ just prepare
 
 ### Running The Application
 
-1. Install the application's apk from the Drive link: [app-release.apk](https://drive.google.com/file/d/1nF3qDgNOlLLgVYR794ADzDcbzAtif0oe)
+1. Install the application's apk from the Drive link: [app-release.apk](https://drive.google.com/file/d/1nF3qDgNOlLLgVYR794ADzDcbzAtif0oe), but do not open the app yet.
 2. Download the following, ensure they are saved in your Downloads folder:
   - [model.onnx](https://drive.google.com/file/d/15nL-xuls8v3c8zy69ukJvpHK1vkgKMXW)
   - [model.onnx_data](https://drive.google.com/file/d/1RtWYqhonYZn5l7iEA2bLoubtTA_N-9ig)
   - [tokenizer.json](https://drive.google.com/file/d/19wmiuO3AAcBhxJ4TsfqtFQjJwVce-0qe)
+3. Open the installed app.
 
 ## Limitations
 
